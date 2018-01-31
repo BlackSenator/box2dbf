@@ -1,0 +1,21 @@
+{
+    "name": "BlackSenator/box2dbf",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "BlackSenator",
+            "email": "knuffy@anasco.de"
+        }
+    ],
+    "require": {
+        "php": "^7.0",
+        "symfony/console": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "BlackSenator\\": "src/"
+        },
+        "files": ["src/functions.php"]
+    }
+}
