@@ -1,2 +1,77 @@
-# box2dbf
-Downloading contact data with FAX numbers from AVM Fritz!Box into Fritz!adr (fax4box) dBase File (dbf) 
+# Download contacts from AVM FRITZ!Box and convert them to Fritz!adr format 
+
+Purpose of the software is the (automatic) downloading of contact data with FAX numbers from your Fritzbox and transfer them into the AVM Fritz!adr database format (dBase).
+
+This is a spin-off from https://github.com/BlackSenator/carddav2fb_XR. If you´re using the AVM FAX solution fax4box and want the adressbook FAX numbers synchron with them in your phonebook(s) of your Fritz!Box this is a way.     
+
+## Requirements
+
+  * PHP 7.0 (`apt-get install php7.0 php7.0-cli php7.0-curl php7.0-mbstring php7.0-soap php7.0-xml`)
+  * Composer (follow the installation guide at https://getcomposer.org/download/)
+  * the dBase library for php 7.0
+
+## Installation
+
+Install carddav2fb:
+
+    cd /
+    git clone https://github.com/BlackSenator/box2dbf.git
+    cd box2dbf
+    
+Install composer (see https://getcomposer.org/download/ for newer instructions):
+
+    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    php -r "if (hash_file('SHA384', 'composer-setup.php') === '544e09ee996cdf60ece3804abc52599c22b1f40f4323403c44d44fdfdd586475ca9813a858088ffbc1f233e9b180f061') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+    php composer-setup.php
+    php -r "unlink('composer-setup.php');"
+    mv composer.phar /usr/local/bin/composer
+    composer install
+
+Install the dBase library (see instructions at https://github.com/mote0230/dbase-pecl-php7).
+
+    sudo apt-get install php7.0-dev
+    git clone git://github.com/mote0230/dbase-pecl-php7.git ~/php7-dbase
+    cd php7-dbase/
+    phpize
+    ./configure
+    make
+    sudo make install
+    cd ~
+    rm -rf ~/php7-dbase
+
+  After compiling the `dbase.so` on your system you will find it in `/usr/lib/php/20151012` and needs to be linked to your php installation:
+
+    sudo nano /etc/php/7.0/mods-available/dbase.ini
+  add
+  
+    extension=dbase.so
+  save file
+  
+    sudo ln -s /etc/php/7.0/mods-available/dbase.ini /etc/php/7.0/fpm/conf.d/20-dbase.ini
+    sudo ln -s /etc/php/7.0/mods-available/dbase.ini /etc/php/7.0/cli/conf.d/20-dbase.ini
+    cd /etc/init.d
+    service apache2 restart
+
+
+Edit `config.example.php` and save as `config.php` or use an other name of your choice (but than keep in mind to use the -c option to define your renamed file)
+
+## Usage
+
+List all commands:
+
+    php box2dbf.php -h
+
+Complete processing:
+
+    php box2dbf.php run
+
+Get help for a command:
+
+    php box2dbf.php run -h
+
+
+## License
+This script is released under Public Domain, some parts under MIT license. Make sure you understand which parts are which.
+
+## Authors
+Copyright (c) 2018 Volker Püschel and maybe others
