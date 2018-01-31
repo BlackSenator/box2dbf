@@ -38,6 +38,8 @@ class RunCommand extends Command
             error_log("Downloading contacts from Fritz!Box; IP: ".$fritzbox['url']);
             $result = $client->GetPhonebook(new \SoapParam($phonebook['id'],"NewPhonebookID"));
 		    $xml = simplexml_load_file($result['NewPhonebookURL']);
+			error_log("Downloaded contacts");
+			error_log("Converting contacts");
 			$nc = exportfa($xml, $this->config['fritzadrpath'][0]);
 			error_log(sprintf("Converted %d FAX number(s) in " . $this->config['fritzadrpath'][0], $nc));
         }
