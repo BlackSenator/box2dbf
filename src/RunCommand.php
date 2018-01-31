@@ -32,18 +32,7 @@ class RunCommand extends Command
 
         $fritzbox = $this->config['fritzbox'];
         
-        $client = new \SoapClient(
-            null,
-            array(
-                'location'   => "http://".$fritzbox['url'].":49000/upnp/control/x_contact",
-                'uri'        => "urn:dslforum-org:service:X_AVM-DE_OnTel:1",
-                'noroot'     => true,
-                'login'      => $fritzbox['user'],
-                'password'   => $fritzbox['password'],  /*
-				'trace'      => true,
-                'exceptions' => true  */
-            )
-        );		
+        $client = getSoapClient($fritzbox['url'], $fritzbox['user'], $fritzbox['password']);
 
         foreach ($this->config['phonebooks'] as $phonebook) {
             error_log("Downloading contacts from Fritz!Box; IP: ".$fritzbox['url']);

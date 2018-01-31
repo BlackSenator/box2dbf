@@ -7,6 +7,24 @@ use BlackSenator\FritzAdr\fritzadr;
 use \SimpleXMLElement;
 
 
+function getSOAPclient($fb_ip = 'fritz.box', $user = 'dslf_config', $password = false) {
+	
+	    $client = new \SoapClient(
+            null,
+            array(
+                'location'   => "http://".$fb_ip.":49000/upnp/control/x_contact",
+                'uri'        => "urn:dslforum-org:service:X_AVM-DE_OnTel:1",
+                'noroot'     => true,
+                'login'      => $user,
+                'password'   => $password,  /*
+				'trace'      => true,
+                'exceptions' => true  */
+            )
+        );
+	return $client;
+}
+
+
 function exportFA($xml, string $dblocation) { 
     
 	$convert2fa = new converter2fa();
