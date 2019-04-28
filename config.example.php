@@ -1,25 +1,17 @@
 <?php
 
 $config = [
-    'phonebooks' => [
-	    [
-            'id'   => 0,
-            'name' => 'Telefonbuch'
-		],                                 /* add as many as you need
-		[
-            'id'   => 1,
-            'name' => '?'
-		],                                 */
-
-    ],
 
     'fritzbox' => [
         'url'      => 'fritz.box',
-        'user'     => 'dslf-config',       // default User 
+        'user'     => '',
         'password' => '',
+        'fritzadr' => '/FRITZSTICK/FRITZ/mediabox',     // FRITZadr will be written to this location
+        'plainFTP' => false,                            // set true to use FTP instead of FTPS
     ],
 
-    'fritzadrpath' => [                
-        '/media/fritzbox/FRITZ/mediabox/FritzAdr.dbf'
-    ],   
+    'phonebook' => [
+        'id'           => 0,
+        'name'         => 'Telefonbuch',
+    ]
 ];

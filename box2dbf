@@ -1,16 +1,16 @@
 #!/usr/bin/env php
 <?php
 
-namespace BlackSenator;
+namespace blacksenator;
 
 use Symfony\Component\Console\Application;
 
 require_once('vendor/autoload.php');
 
-$app = new Application('Fritz!Box to Fritz!adr converter');
+$app = new Application('FRITZ!Box to FRITZ!Adr converter');
 
 $app->addCommands(array(
-	new RunCommand()
+    new RunCommand()
 ));
 
 $app->run();

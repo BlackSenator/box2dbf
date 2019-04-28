@@ -1,6 +1,6 @@
 <?php
 
-namespace BlackSenator;
+namespace blacksenator;
 
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
@@ -24,6 +24,7 @@ trait ConfigTrait
             throw new \Exception('Config file ' . $configFile . ' does not exist');
         }
 
+        $config = []; // make phpstan happy
         require_once($configFile);
         $this->config = $config;
     }

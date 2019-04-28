@@ -1,148 +1,71 @@
 <?php
 
-/*
-Die Klasse stellt Funktionen zur Verfügung, um die Adressdatenbank FRITZ!adr
-von AVM zu manipulieren. FRITZ!adr ist ein Adress- und Telefonbuch für die
-Programme FRITZ!fon, FRITZ!fax, FRITZ!data, FRITZ!com sowie fax4box:
- 
-- Erstellen einer neuen Datenbank:          CreateFritzAdr
-- Öffnen einer vorhandenen Daenbank:        OpenFritzAdr
-- einen Datensatz anfügen:                  AddRecordFritzAdr
-- eien Datensatz löschen:                   DelRecordFritzAdr
-- einen Datensatz als assoziatives array:   GetRecordFritzAdr
-- Anzahl der Datensätze:                    CountRecordFritzAdr
-- Datenbank reorganiseren (endg. löschen):  PackFritzAdr
-- Datensatz überschreiben:                  ReplaceRecordFritzAdr
-- Datenbank schließen:                      CloseFritzAdr
+namespace blacksenator\FritzAdr;
 
-Die DB-Analyse mehrere FritzAdr.dbf Dateien hat überraschender-
-weise beide Varianten gezeigt.
-Letztlich funktioniert hat bei mir die 21er.  
+/**
+ * This class provides a functionality to extract fax numbers
+ * and provide them in a simple array with 19 or 21 fields
+ * - to pass them to FritzAdr compliant dBASE file (fritzadr.dbf).
+ * The DB analysis of several FritzAdr.dbf files has surprisingly
+ * shown both variants. Ultimately, the 21er works for me.
+ *
+ * Copyright (c) 2019 Volker Püschel
+ * @license MIT
+ */
 
-Author: Volker Püschel
-*/
-
-namespace BlackSenator\FritzAdr;
+use blacksenator\fritzdbf\fritzdbf;
+use \SimpleXMLElement;
 
 class fritzadr
 {
+    /**
+     * delivers an structured adress array of fax numbers from a designated phone book
+     *
+     * @param SimpleXMLElement $xmlPhonebook phonebook in FRITZ!Box format
+     * @return array fax numbers, names
+     */
+    public function getFAXcontacts(SimpleXMLElement $xmlPhonebook) : array
+    {
+        $i = -1;
+        $adrRecords = [];
 
-    const FritzAdrDefinition_19 = [
-            ['BEZCHNG',   'C',  40],    //  1
-            ['FIRMA',     'C',  40],    //  2
-            ['NAME',      'C',  40],    //  3
-            ['VORNAME',   'C',  40],    //  4
-            ['ABTEILUNG', 'C',  40],
-            ['STRASSE',   'C',  40],
-            ['PLZ',       'C',  10],
-            ['ORT',       'C',  40],
-            ['KOMMENT',   'C',  80],
-            ['TELEFON',   'C',  64],
-            ['MOBILFON',  'C',  64],
-            ['TELEFAX',   'C',  64],    // 12
-            ['TRANSFER',  'C',  64],
-            ['BENUTZER',  'C', 128],
-            ['PASSWORT',  'C', 128],
-            ['TRANSPROT', 'C',   1],
-            ['NOTIZEN',   'C', 254],
-            ['EMAIL',     'C', 254],
-            ['HOMEPAGE',  'C', 254],     // 19
-        ];
-    const FritzAdrDefinition_21 = [
-            ['BEZCHNG',   'C',  40],   // Feld 1
-            ['FIRMA',     'C',  40],   // Feld 2
-            ['NAME',      'C',  40],   // Feld 3
-            ['VORNAME',   'C',  40],   // Feld 4
-            ['ABTEILUNG', 'C',  40],
-            ['STRASSE',   'C',  40],
-            ['PLZ',       'C',  10],
-            ['ORT',       'C',  40],
-            ['KOMMENT',   'C',  80],
-            ['TELEFON',   'C',  64],
-            ['TELEFAX',   'C',  64],   // Feld 11
-            ['TRANSFER',  'C',  64],
-            ['TERMINAL',  'C',  64],
-            ['BENUTZER',  'C', 128],
-            ['PASSWORT',  'C', 128],
-            ['TRANSPROT', 'C',   1],
-            ['TERMMODE',  'C',  40],
-            ['NOTIZEN',   'C', 254],
-            ['MOBILFON',  'C',  64],
-            ['EMAIL',     'C', 254],
-            ['HOMEPAGE',  'C', 254]   // Feld 21
-        ];
-    const FritzAdrDefinition = self::FritzAdrDefinition_21;    // ggf. andere Definition wählen 
-        
-    private $DataBasePath = '',
-            $DataBaseID,
-            $DataBaseHeader;
-            
-    public $NumAttributes = 0;
-    
-    
-    public function __construct() {
-        $this->NumAttributes = count(self::FritzAdrDefinition);
-    }
-    
-            
-    public function CreateFritzAdr ($db_path = '') {
-        IF (!empty ($db_path)) {
-            IF (dbase_create($db_path, self::FritzAdrDefinition)) {
-                $this->DataBasePath = $db_path;
-                return true;
+        foreach ($xmlPhonebook->phonebook->contact as $contact) {
+            foreach ($contact->telephony->number as $number) {
+                if ((string)$number['type'] == "fax_work") {
+                    $i++;
+                    $name = $contact->person->realName;
+                    $faxnumber = (string)$number;
+                    // dBase uses the DOS charset (Codepage 850); htmlspecialchars makes a '&amp;' from '&' must be reset here
+                    $name = str_replace('&amp;', '&', iconv('UTF-8', 'CP850//TRANSLIT', $name));
+
+                    $adrRecords[$i]['BEZCHNG'] = $name;            // fullName in field 1
+                    $parts = explode(', ', $name);
+                    if (count($parts) !== 2) {                     // if the name was not separated by a comma (no first and last name)
+                        $adrRecords[$i]['FIRMA'] = $name;          // fullName in field 2
+                    } else {
+                        $adrRecords[$i]['NAME']    = $parts[0];    // lastname in field 3
+                        $adrRecords[$i]['VORNAME'] = $parts[1];    // firstnme in field 4
+                    }
+                    $adrRecords[$i]['TELEFAX'] = $faxnumber;       // FAX number in field 10/11
+                }
             }
-            ELSE {
-                ECHO 'Error: Can´t create dBase file '.$db_path;
-                return false;
-            }
-                
         }
-        ELSE {
-            ECHO 'Error: Can´t create dBase file without a location!';
-            return false;
-            }
-    }
-        
-    public function OpenFritzAdr ($db_path = '') {
-        IF (!empty ($db_path)) {
-            $this->DataBasePath = $db_path;
-        }
-        $this->DataBaseID = dbase_open ($this->DataBasePath, 2);
-        return $this->DataBaseID;
+        return $adrRecords;
     }
 
-    public function GetHeaderFritzAdr () {
-        $this->DataBaseHeader = dbase_get_header_info ($this->DataBaseID);
-        return $this->DataBaseHeader;
-        }
-    
-    public function AddRecordFritzAdr ($db_data) {
-        return dbase_add_record ($this->DataBaseID, $db_data);
-        }
-
-    public function DelRecordFritzAdr ($RecordNum) {
-        return dbase_delete_record ($this->DataBaseID, $RecordNum);
-        }
-    
-    public function GetRecordFritzAdr ($RecordNum) {
-        return dbase_get_record_with_names ($this->DataBaseID, $RecordNum);
-        }
-    
-    public function CountRecordFritzAdr () {
-        return dbase_numrecords ($this->DataBaseID);
-        }
-    
-    public function PackFritzAdr () {
-        return dbase_pack ($this->DataBaseID);
+    /**
+     * get contact data array in dBase III format
+     *
+     * @param array $contacts
+     * @return string
+     */
+    public function getdBaseData(array $contacts)
+    {
+        $fritzAdr = new fritzdbf();
+        foreach ($contacts as $contact) {
+            $fritzAdr->addRecord($contact);
         }
 
-    public function ReplaceRecordFritzAdr ($db_data, $rec_num) {
-        return dbase_replace_record ($this->DataBaseID, $db_data, $rec_num);
-        }
-    
-    public function CloseFritzAdr () {
-        dbase_close ($this->DataBaseID);
-        }
+        return $fritzAdr->getDatabase();
+    }
 }
-
-?>
